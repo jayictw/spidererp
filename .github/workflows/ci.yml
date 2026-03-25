@@ -1,0 +1,81 @@
+﻿name: CI
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+
+jobs:
+  test:
+    runs-on: windows-latest
+
+    env:
+      DATABASE_URL: sqlite:///./ci_test.db
+      HOST: 127.0.0.1
+      PORT: 8000
+      CRAWLER_SSL_VERIFY: "false"
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUNBUFFERED: "1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          py -3 -m pip install --upgrade pip
+          py -3 -m pip install -r requirements.txt
+
+      - name: Show Python version
+        shell: pwsh
+        run: |
+          py -3 --version
+          py -3 -m pip --version
+
+      - name: Run Alembic upgrade
+        shell: pwsh
+        run: |
+          py -3 -m alembic -c .\alembic.ini upgrade head
+
+      - name: Check Alembic current revision
+        shell: pwsh
+        run: |
+          py -3 -m alembic -c .\alembic.ini current
+
+      - name: Seed database
+        shell: pwsh
+        run: |
+          powershell -ExecutionPolicy Bypass -File .\scripts\seed_db.ps1
+
+      - name: Run migration smoke
+        shell: pwsh
+        run: |
+          py -3 -m pytest tests/migration/test_migration_smoke.py -q
+
+      - name: Run API smoke
+        shell: pwsh
+        run: |
+          py -3 -m pytest tests/test_api_smoke.py -q
+
+      - name: Run list contract closure tests
+        shell: pwsh
+        run: |
+          py -3 -m pytest tests/test_list_contract_closure.py -q
+
+      - name: Run dedupe tests
+        shell: pwsh
+        run: |
+          py -3 -m pytest tests/unit/test_dedupe_v1.py tests/api/test_dedupe_v1_flow.py -q
+
+      - name: Run trace tests
+        shell: pwsh
+        run: |
+          py -3 -m pytest tests/api/test_sample_trace_endpoint.py tests/test_samples_trace_page.py -q
