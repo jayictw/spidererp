@@ -1,0 +1,28 @@
+﻿# Web
+fastapi
+uvicorn[standard]
+jinja2
+python-multipart
+
+# Database
+sqlalchemy
+psycopg2-binary
+alembic
+
+# Validation / settings
+pydantic
+pydantic-settings
+
+# Crawler
+requests
+beautifulsoup4
+lxml
+
+# HTTP client
+httpx
+
+# Tests
+pytest
+pytest-asyncio
+
+python-dotenv
