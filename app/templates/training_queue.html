@@ -3,7 +3,7 @@
 
 {% block content %}
 <section class="panel">
-  {{ ui.section_header('Training Queue', '样本沉淀、优先级与规则联动入口。') }}
+  {{ ui.section_header('训练队列', '样本沉淀、优先级与规则联动入口。') }}
 
   <div class="filter-bar">
     <input type="search" name="keyword" placeholder="搜索 sample_id / linked_rule_id / note" value="{{ filters.keyword|default('') }}" />
@@ -16,9 +16,9 @@
     </select>
     <select name="priority">
       <option value="">优先级</option>
-      <option value="high">high</option>
-      <option value="medium">medium</option>
-      <option value="low">low</option>
+      <option value="high">高</option>
+      <option value="medium">中</option>
+      <option value="low">低</option>
     </select>
     <button class="btn">筛选</button>
   </div>

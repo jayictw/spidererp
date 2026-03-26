@@ -33,7 +33,7 @@
 {% set message = error.message|default(error.detail|default(error)) %}
 <div class="error-banner" role="alert">
   <div>
-    <strong>API Error</strong>
+    <strong>接口错误</strong>
     <p>{{ message }}</p>
   </div>
   <code>{{ code }}</code>
@@ -75,15 +75,15 @@
 {% macro duplicate_badge(item) -%}
 {% set duplicate = item.is_duplicate|default(item.duplicate|default(false)) %}
 {% if duplicate or item.duplicate_status|default('') in ['duplicate', 'duplicated', 'merged'] %}
-  {{ badge('duplicate', 'warn') }}
+  {{ badge('重复', 'warn') }}
 {% else %}
-  {{ badge('unique', 'good') }}
+  {{ badge('不重复', 'good') }}
 {% endif %}
 {%- endmacro %}
 
 {% macro trace_section(trace_sample=None, trace_events=None, trace_data=None, trace_error=None) -%}
 <section class="panel trace-panel" id="trace">
-  {{ section_header('Trace', '展示去重键、解析版本、规则版本与追踪路径。') }}
+  {{ section_header('追溯信息', '展示去重键、解析版本、规则版本与追踪路径。') }}
   {{ api_error(trace_error) }}
   {% if trace_data %}
   <div class="trace-grid">
@@ -100,7 +100,7 @@
       <div><dt>primary_sample</dt><dd>{% if trace_data.primary_sample %}#{{ trace_data.primary_sample.id }} {{ trace_data.primary_sample.title|default('') }}{% else %}无{% endif %}</dd></div>
     </dl>
     <div class="trace-events">
-      <h3>audit_timeline</h3>
+      <h3>审计时间线</h3>
       {% for event in trace_data.audit_timeline|default([]) %}
       <article class="trace-event">
         <div class="trace-event__head">
@@ -133,7 +133,7 @@
       <div><dt>normalized_excerpt</dt><dd><pre>{{ trace_sample.normalized_payload|default({}) | tojson(indent=2) }}</pre></dd></div>
     </dl>
     <div class="trace-events">
-      <h3>trace_events</h3>
+      <h3>追溯事件</h3>
       {% for event in trace_events|default([]) %}
       <article class="trace-event">
         <div class="trace-event__head">
@@ -147,12 +147,12 @@
         </div>
       </article>
       {% else %}
-      <div class="placeholder-box">暂无 trace 事件。选中一条样本后，这里会显示追踪链路。</div>
+      <div class="placeholder-box">暂无追溯事件。选中一条样本后，这里会显示追踪链路。</div>
       {% endfor %}
     </div>
   </div>
   {% else %}
-  {{ empty_state('暂无 trace 数据', '点击样本行内“查看 trace”后，这里会显示追溯信息。', '') }}
+  {{ empty_state('暂无追溯数据', '点击样本行内“查看 trace”后，这里会显示追溯信息。', '') }}
   {% endif %}
 </section>
 {%- endmacro %}

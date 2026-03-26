@@ -3,7 +3,7 @@
 
 {% block content %}
 <section class="panel">
-  {{ ui.section_header('Rule Memory', '规则列表、解释说明与版本入口。', '查看规则详情', '/rules/1') }}
+  {{ ui.section_header('规则记忆库', '规则列表、解释说明与版本入口。', '查看规则详情', '/rules/1') }}
   {{ ui.api_error(api_error|default(None)) }}
   {% set rules_payload = rules_payload|default(data|default({})) %}
   {% set rules_items = rules|default(rules_payload.get('items', [])) %}
@@ -58,7 +58,7 @@
         </tr>
         {% else %}
         <tr>
-          <td colspan="6">{% if has_filters %}{{ ui.empty_state('查无结果', '当前筛选条件下没有匹配的 Rule。', '清空筛选后再试。') }}{% else %}{{ ui.empty_state('暂无规则', '这里会显示规则解释、版本信息和自动放行策略。', '先 seed 一条规则，确认字段映射。') }}{% endif %}</td>
+          <td colspan="6">{% if has_filters %}{{ ui.empty_state('查无结果', '当前筛选条件下没有匹配的规则。', '清空筛选后再试。') }}{% else %}{{ ui.empty_state('暂无规则', '这里会显示规则解释、版本信息和自动放行策略。', '先 seed 一条规则，确认字段映射。') }}{% endif %}</td>
         </tr>
         {% endfor %}
       </tbody>

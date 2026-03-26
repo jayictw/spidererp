@@ -5,13 +5,13 @@
 <section class="panel">
   <div class="detail-hero">
     <div>
-      <p class="eyebrow">Rule Detail</p>
+      <p class="eyebrow">规则详情</p>
       <h2>{{ rule.rule_name|default('规则详情') }}</h2>
       <p>{{ rule.explanation_rule|default('这里展示规则说明、样本输入和预期输出。') }}</p>
     </div>
     <div class="detail-hero__actions">
-      {{ ui.badge(rule.enabled|default(false) and 'enabled' or 'disabled', rule.enabled|default(false) and 'good' or 'neutral') }}
-      {{ ui.badge(rule.auto_approve_on_hit|default(false) and 'auto approve' or 'manual review', rule.auto_approve_on_hit|default(false) and 'warn' or 'neutral') }}
+      {{ ui.badge(rule.enabled|default(false) and '启用' or '停用', rule.enabled|default(false) and 'good' or 'neutral') }}
+      {{ ui.badge(rule.auto_approve_on_hit|default(false) and '自动放行' or '人工审核', rule.auto_approve_on_hit|default(false) and 'warn' or 'neutral') }}
     </div>
   </div>
 </section>

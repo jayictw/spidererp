@@ -3,7 +3,7 @@
 
 {% block content %}
 <section class="panel">
-  {{ ui.section_header('Samples', '样本列表、解析结果与审核状态。') }}
+  {{ ui.section_header('样本列表', '样本列表、解析结果与审核状态。') }}
   {{ ui.api_error(api_error|default(None)) }}
   {% set samples_payload = samples_payload|default(data|default({})) %}
   {% set samples_items = samples|default(samples_payload.get('items', [])) %}
@@ -23,23 +23,23 @@
     </select>
     <select name="is_duplicate">
       <option value="">重复标记</option>
-      <option value="true" {% if request.query_params.get('is_duplicate', '') == 'true' %}selected{% endif %}>duplicate</option>
-      <option value="false" {% if request.query_params.get('is_duplicate', '') == 'false' %}selected{% endif %}>unique</option>
+      <option value="true" {% if request.query_params.get('is_duplicate', '') == 'true' %}selected{% endif %}>重复</option>
+      <option value="false" {% if request.query_params.get('is_duplicate', '') == 'false' %}selected{% endif %}>不重复</option>
     </select>
-    <input type="text" name="rule_version_id" placeholder="rule_version_id" value="{{ request.query_params.get('rule_version_id', '') }}" />
-    <input type="text" name="source_name" placeholder="source_name" value="{{ request.query_params.get('source_name', '') }}" />
-    <input type="text" name="domain" placeholder="domain" value="{{ request.query_params.get('domain', '') }}" />
-    <input type="text" name="dedupe_key" placeholder="dedupe_key" value="{{ request.query_params.get('dedupe_key', '') }}" />
+    <input type="text" name="rule_version_id" placeholder="规则版本 ID" value="{{ request.query_params.get('rule_version_id', '') }}" />
+    <input type="text" name="source_name" placeholder="来源名称" value="{{ request.query_params.get('source_name', '') }}" />
+    <input type="text" name="domain" placeholder="域名" value="{{ request.query_params.get('domain', '') }}" />
+    <input type="text" name="dedupe_key" placeholder="去重键" value="{{ request.query_params.get('dedupe_key', '') }}" />
     <select name="sort_by">
-      <option value="crawl_time" {% if current_sort == 'crawl_time' %}selected{% endif %}>按 crawl_time 排序</option>
-      <option value="created_at" {% if current_sort == 'created_at' %}selected{% endif %}>按 created_at 排序</option>
-      <option value="confidence" {% if current_sort == 'confidence' %}selected{% endif %}>按 confidence 排序</option>
-      <option value="status" {% if current_sort == 'status' %}selected{% endif %}>按 status 排序</option>
-      <option value="is_duplicate" {% if current_sort == 'is_duplicate' %}selected{% endif %}>按 is_duplicate 排序</option>
+          <option value="crawl_time" {% if current_sort == 'crawl_time' %}selected{% endif %}>按抓取时间排序</option>
+          <option value="created_at" {% if current_sort == 'created_at' %}selected{% endif %}>按创建时间排序</option>
+          <option value="confidence" {% if current_sort == 'confidence' %}selected{% endif %}>按置信度排序</option>
+          <option value="status" {% if current_sort == 'status' %}selected{% endif %}>按状态排序</option>
+          <option value="is_duplicate" {% if current_sort == 'is_duplicate' %}selected{% endif %}>按重复标记排序</option>
     </select>
     <select name="sort_order">
-      <option value="desc" {% if current_order == 'desc' %}selected{% endif %}>desc</option>
-      <option value="asc" {% if current_order == 'asc' %}selected{% endif %}>asc</option>
+      <option value="desc" {% if current_order == 'desc' %}selected{% endif %}>降序</option>
+      <option value="asc" {% if current_order == 'asc' %}selected{% endif %}>升序</option>
     </select>
     <div class="form-actions">
       <button class="btn btn-primary" type="submit">筛选</button>
@@ -55,11 +55,11 @@
           {{ ui.sortable_th(request, '来源', 'source_name', current_sort, current_order) }}
           {{ ui.sortable_th(request, '状态', 'status', current_sort, current_order) }}
           {{ ui.sortable_th(request, '重复', 'is_duplicate', current_sort, current_order) }}
-          {{ ui.sortable_th(request, 'dedupe_key', 'dedupe_key', current_sort, current_order) }}
-          {{ ui.sortable_th(request, 'crawl_time', 'crawl_time', current_sort, current_order) }}
-          {{ ui.sortable_th(request, 'created_at', 'created_at', current_sort, current_order) }}
-          {{ ui.sortable_th(request, 'confidence', 'confidence', current_sort, current_order) }}
-          <th>trace</th>
+          {{ ui.sortable_th(request, '去重键', 'dedupe_key', current_sort, current_order) }}
+          {{ ui.sortable_th(request, '抓取时间', 'crawl_time', current_sort, current_order) }}
+          {{ ui.sortable_th(request, '创建时间', 'created_at', current_sort, current_order) }}
+          {{ ui.sortable_th(request, '置信度', 'confidence', current_sort, current_order) }}
+          <th>追溯</th>
         </tr>
       </thead>
       <tbody>
@@ -82,7 +82,7 @@
         </tr>
         {% else %}
         <tr>
-          <td colspan="9">{% if has_filters %}{{ ui.empty_state('查无结果', '当前筛选条件下没有匹配的 Sample。', '清空筛选后再试。') }}{% else %}{{ ui.empty_state('暂无样本', '这里会显示 normalized_payload、raw_payload、重复标记和 Trace 入口。', '先 seed 一条公开网页样本。') }}{% endif %}</td>
+          <td colspan="9">{% if has_filters %}{{ ui.empty_state('查无结果', '当前筛选条件下没有匹配的样本。', '清空筛选后再试。') }}{% else %}{{ ui.empty_state('暂无样本', '这里会显示 normalized_payload、raw_payload、重复标记和 Trace 入口。', '先 seed 一条公开网页样本。') }}{% endif %}</td>
         </tr>
         {% endfor %}
       </tbody>

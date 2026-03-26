@@ -3,7 +3,7 @@
 
 {% block content %}
 <section class="panel">
-  {{ ui.section_header('Jobs', '任务列表、范围与启停状态。', '新建任务', '/jobs/new') }}
+  {{ ui.section_header('任务列表', '任务列表、范围与启停状态。', '新建任务', '/jobs/new') }}
   {{ ui.api_error(api_error|default(None)) }}
   {% set jobs_payload = jobs_payload|default(data|default({})) %}
   {% set jobs_items = jobs|default(jobs_payload.get('items', [])) %}

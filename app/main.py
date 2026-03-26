@@ -72,7 +72,7 @@ def create_app(database_url: str | None = None) -> FastAPI:
             request=request,
             name='dashboard.html',
             context={
-                **_base_context(request, 'Dashboard', 'dashboard'),
+                **_base_context(request, '仪表盘', 'dashboard'),
                 'stats': [
                     {'label': '任务', 'value': str(len(seed_preview['jobs'])), 'note': 'seed preview'},
                     {'label': '规则', 'value': str(len(seed_preview['rules'])), 'note': 'seed preview'},
