@@ -1,0 +1,109 @@
+﻿{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+
+{% block content %}
+<section class="panel">
+  {{ ui.section_header('Audit Timeline', '记录对象、动作、状态与 detail_json。') }}
+  {{ ui.api_error(api_error|default(None)) }}
+  {% set audit_payload = audit_payload|default(data|default({})) %}
+  {% set audit_items = audit_logs|default(audit_payload.get('items', [])) %}
+  {% set audit_meta = pagination|default(audit_payload.get('meta', {})) %}
+
+  {% set current_sort = sort_by|default(request.query_params.get('sort_by', 'event_time')) %}
+  {% set current_order = sort_order|default(request.query_params.get('sort_order', 'desc')) %}
+  {% set has_filters = request.query_params.get('keyword') or request.query_params.get('object_type') or request.query_params.get('status') %}
+
+  <form class="filter-bar" method="get">
+    <input type="search" name="keyword" placeholder="搜索 object_type / object_id / operator / summary" value="{{ filters.keyword|default(request.query_params.get('keyword', '')) }}" />
+    <select name="object_type">
+      <option value="">全部对象</option>
+      <option value="job" {% if filters.object_type|default(request.query_params.get('object_type', '')) == 'job' %}selected{% endif %}>job</option>
+      <option value="rule" {% if filters.object_type|default(request.query_params.get('object_type', '')) == 'rule' %}selected{% endif %}>rule</option>
+      <option value="sample" {% if filters.object_type|default(request.query_params.get('object_type', '')) == 'sample' %}selected{% endif %}>sample</option>
+      <option value="system_config" {% if filters.object_type|default(request.query_params.get('object_type', '')) == 'system_config' %}selected{% endif %}>system_config</option>
+    </select>
+    <input type="text" name="action" placeholder="action" value="{{ request.query_params.get('action', '') }}" />
+    <input type="text" name="operator" placeholder="operator" value="{{ request.query_params.get('operator', '') }}" />
+    <input type="text" name="sample_id" placeholder="sample_id" value="{{ request.query_params.get('sample_id', '') }}" />
+    <input type="text" name="rule_version_id" placeholder="rule_version_id" value="{{ request.query_params.get('rule_version_id', '') }}" />
+    <select name="sort_by">
+      <option value="event_time" {% if current_sort == 'event_time' %}selected{% endif %}>按 event_time 排序</option>
+      <option value="id" {% if current_sort == 'id' %}selected{% endif %}>按 id 排序</option>
+      <option value="status" {% if current_sort == 'status' %}selected{% endif %}>按 status 排序</option>
+      <option value="object_type" {% if current_sort == 'object_type' %}selected{% endif %}>按 object_type 排序</option>
+      <option value="action" {% if current_sort == 'action' %}selected{% endif %}>按 action 排序</option>
+    </select>
+    <select name="sort_order">
+      <option value="desc" {% if current_order == 'desc' %}selected{% endif %}>desc</option>
+      <option value="asc" {% if current_order == 'asc' %}selected{% endif %}>asc</option>
+    </select>
+    <select name="status">
+      <option value="">全部状态</option>
+      <option value="pending" {% if filters.status|default(request.query_params.get('status', '')) == 'pending' %}selected{% endif %}>pending</option>
+      <option value="approved" {% if filters.status|default(request.query_params.get('status', '')) == 'approved' %}selected{% endif %}>approved</option>
+      <option value="failed" {% if filters.status|default(request.query_params.get('status', '')) == 'failed' %}selected{% endif %}>failed</option>
+      <option value="exported" {% if filters.status|default(request.query_params.get('status', '')) == 'exported' %}selected{% endif %}>exported</option>
+    </select>
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">筛选</button>
+      <a class="btn" href="{{ request.url.replace(query='') }}">清空</a>
+    </div>
+  </form>
+
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          {{ ui.sortable_th(request, 'event_time', 'event_time', current_sort, current_order) }}
+          {{ ui.sortable_th(request, 'object_type', 'object_type', current_sort, current_order) }}
+          {{ ui.sortable_th(request, 'id', 'id', current_sort, current_order) }}
+          {{ ui.sortable_th(request, 'action', 'action', current_sort, current_order) }}
+          {{ ui.sortable_th(request, 'status', 'status', current_sort, current_order) }}
+          <th>operator</th>
+          <th>summary</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in audit_items %}
+        <tr>
+          <td>{{ item.event_time|default('') }}</td>
+          <td>{{ item.object_type|default('') }}</td>
+          <td>{{ item.id|default('') }}</td>
+          <td>{{ item.action|default('') }}</td>
+          <td>{{ ui.badge(item.status|default('pending'), 'status-' ~ item.status|default('pending')) }}</td>
+          <td>{{ item.operator|default('') }}</td>
+          <td class="table-sub">{{ item.summary|default('') }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7">{% if has_filters %}{{ ui.empty_state('查无结果', '当前筛选条件下没有匹配的 Audit 记录。', '清空筛选后再试。') }}{% else %}{{ ui.empty_state('暂无审计日志', '这里会显示 object_type、action、status 与 detail_json。', '后端接入后就能看到完整时间线。') }}{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {{ ui.pagination_footer(request, audit_meta, '条日志') }}
+</section>
+
+<section class="timeline panel">
+  {% for item in audit_items %}
+  <article class="timeline__item">
+    <div class="timeline__head">
+      <strong>{{ item.event_time|default('') }}</strong>
+      <span>{{ item.object_type|default('') }} #{{ item.object_id|default('') }}</span>
+    </div>
+    <div class="timeline__body">
+      <div class="timeline__summary">{{ item.summary|default('') }}</div>
+      <div class="timeline__meta">
+        {{ ui.badge(item.status|default('pending'), 'status-' ~ item.status|default('pending')) }}
+        <span>来源：{{ item.source|default('') }}</span>
+        <span>操作人：{{ item.operator|default('') }}</span>
+      </div>
+      <pre class="code-block">{{ item.detail_json|default('{}') }}</pre>
+    </div>
+  </article>
+  {% else %}
+  <div class="placeholder-box">暂无审计日志。</div>
+  {% endfor %}
+</section>
+{% endblock %}

@@ -1,0 +1,104 @@
+﻿{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+
+{% block content %}
+<section class="hero-grid">
+  <article class="hero-card hero-card--accent">
+    <p class="eyebrow">总览</p>
+    <h2>把采集、解析、审核、训练池放进同一条链路</h2>
+    <p>这个页面只负责展示和入口组织，实际数据流由后端 contract 冻结后注入。</p>
+    <div class="hero-card__actions">
+      <a class="btn btn-primary" href="/jobs/new">新建任务</a>
+      <a class="btn" href="/samples">查看样本</a>
+    </div>
+  </article>
+
+  <article class="hero-card">
+    <p class="eyebrow">合规边界</p>
+    <h2>保留 robots、限速、重试和审计入口</h2>
+    <ul class="checklist">
+      <li>仅处理公开网页数据</li>
+      <li>robots.txt 检查入口</li>
+      <li>域名级限速与失败重试</li>
+      <li>审计日志全程追踪</li>
+    </ul>
+  </article>
+</section>
+
+<section class="stat-grid">
+  {% for stat in stats|default([
+    {'label': '任务数', 'value': '0', 'note': '等待后端注入'},
+    {'label': '运行中', 'value': '0', 'note': 'JobRun 计数'},
+    {'label': '待审核', 'value': '0', 'note': 'review 状态'},
+    {'label': '已放行', 'value': '0', 'note': 'approved / exported'}
+  ]) %}
+  <article class="stat-card">
+    <span>{{ stat.label }}</span>
+    <strong>{{ stat.value }}</strong>
+    <small>{{ stat.note }}</small>
+  </article>
+  {% endfor %}
+</section>
+
+<section class="panel">
+  {{ ui.section_header('最近任务', '展示任务清单、范围和状态，便于 seed 后快速确认页面链路。', '去任务页', '/jobs') }}
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>任务名</th>
+          <th>来源</th>
+          <th>关键词</th>
+          <th>状态</th>
+          <th>更新时间</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in jobs|default([]) %}
+        <tr>
+          <td>{{ item.task_name }}</td>
+          <td>{{ item.source_type }}</td>
+          <td>{{ item.keywords }}</td>
+          <td>{{ ui.badge(item.status|default('pending'), 'status-' ~ item.status|default('pending')) }}</td>
+          <td>{{ item.updated_at|default('') }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5">{{ ui.empty_state('暂无任务', '后端 seed 之后，这里会显示最近任务和状态。', '可先执行初始化和 seed 流程。') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="split-grid">
+  <article class="panel">
+    {{ ui.section_header('Seed 预览', '用于确认后端注入字段是否完整。') }}
+    <div class="seed-list">
+      {% for row in seed_preview|default([]) %}
+      <div class="seed-row">
+        <strong>{{ row.title|default(row.source_name|default('seed item')) }}</strong>
+        <span>{{ row.source_url|default(row.rule_name|default('')) }}</span>
+      </div>
+      {% else %}
+      <div class="placeholder-box">暂无 seed 预览。</div>
+      {% endfor %}
+    </div>
+  </article>
+
+  <article class="panel">
+    {{ ui.section_header('系统就绪度', '只展示最小可运行状态，不在页面里堆复杂逻辑。') }}
+    <div class="status-list">
+      {% for line in readiness|default([
+        '配置已加载',
+        '数据库初始化入口已保留',
+        'n8n webhook 入口已预留',
+        'ERP 接口入口已预留'
+      ]) %}
+      <div class="status-list__item">{{ line }}</div>
+      {% endfor %}
+    </div>
+  </article>
+</section>
+{% endblock %}

@@ -1,0 +1,81 @@
+﻿{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+
+{% block content %}
+<section class="panel">
+  {{ ui.section_header('Jobs', '任务列表、范围与启停状态。', '新建任务', '/jobs/new') }}
+  {{ ui.api_error(api_error|default(None)) }}
+  {% set jobs_payload = jobs_payload|default(data|default({})) %}
+  {% set jobs_items = jobs|default(jobs_payload.get('items', [])) %}
+  {% set jobs_meta = pagination|default(jobs_payload.get('meta', {})) %}
+
+  {% set current_sort = sort_by|default(request.query_params.get('sort_by', 'updated_at')) %}
+  {% set current_order = sort_order|default(request.query_params.get('sort_order', 'desc')) %}
+  {% set has_filters = request.query_params.get('keyword') or request.query_params.get('source_type') or request.query_params.get('status') %}
+
+  <form class="filter-bar" method="get">
+    <input type="search" name="keyword" placeholder="搜索任务名 / 关键词 / 域名" value="{{ filters.keyword|default(request.query_params.get('keyword', '')) }}" />
+    <select name="source_type">
+      <option value="">全部来源</option>
+      <option value="website" {% if filters.source_type|default(request.query_params.get('source_type', '')) == 'website' %}selected{% endif %}>website</option>
+      <option value="directory" {% if filters.source_type|default(request.query_params.get('source_type', '')) == 'directory' %}selected{% endif %}>directory</option>
+    </select>
+    <select name="status">
+      <option value="">全部状态</option>
+      {% for value in ['pending', 'running', 'parsed', 'review', 'failed', 'approved', 'exported'] %}
+      <option value="{{ value }}" {% if filters.status|default(request.query_params.get('status', '')) == value %}selected{% endif %}>{{ value }}</option>
+      {% endfor %}
+    </select>
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">筛选</button>
+      <a class="btn" href="{{ request.url.replace(query='') }}">清空</a>
+    </div>
+  </form>
+
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          {{ ui.sortable_th(request, '任务名', 'task_name', current_sort, current_order) }}
+          {{ ui.sortable_th(request, '创建时间', 'created_at', current_sort, current_order) }}
+          {{ ui.sortable_th(request, '来源类型', 'id', current_sort, current_order) }}
+          {{ ui.sortable_th(request, '状态', 'status', current_sort, current_order) }}
+          {{ ui.sortable_th(request, '启用', 'enabled', current_sort, current_order) }}
+          {{ ui.sortable_th(request, '更新时间', 'updated_at', current_sort, current_order) }}
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in jobs_items %}
+        <tr>
+          <td>
+            <strong>{{ item.task_name }}</strong>
+            <div class="table-sub">{{ item.schedule_mode|default('') }}</div>
+          </td>
+          <td class="table-sub">{{ item.created_at|default('') }}</td>
+          <td>{{ item.source_type|default('') }}</td>
+          <td>{{ ui.badge(item.status|default('pending'), 'status-' ~ item.status|default('pending')) }}</td>
+          <td>{{ '是' if item.enabled else '否' }}</td>
+          <td class="table-sub">{{ item.updated_at|default('') }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="6">{% if has_filters %}{{ ui.empty_state('查无结果', '当前筛选条件下没有匹配的 Job。', '清空筛选后再试。') }}{% else %}{{ ui.empty_state('暂无任务', '这里会显示 Job 列表、状态 badge 和基础筛选。', '先用新建任务表单创建一条记录。') }}{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {{ ui.pagination_footer(request, jobs_meta, '条任务') }}
+</section>
+
+<section class="panel">
+  {{ ui.section_header('Seed 预览', '后端可在这里挂一组示例任务，便于确认页面结构。') }}
+  <div class="chip-row">
+    {% for chip in job_seed_preview|default([]) %}
+    <span class="chip">{{ chip }}</span>
+    {% else %}
+    <div class="placeholder-box">暂无任务 seed 预览。</div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

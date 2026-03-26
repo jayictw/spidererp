@@ -1,0 +1,32 @@
+﻿# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# Local env
+.venv/
+venv/
+.env
+
+# Local runtime/data artifacts
+*.db
+*.sqlite
+*.sqlite3
+*.log
+.tmp/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+
+# Local business files
+*.xlsx
+*.xls
+*.png
+*.jpg
+*.jpeg
+*.csv
+
+# Temporary folders
+pytest-cache-files-*/

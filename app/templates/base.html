@@ -1,0 +1,61 @@
+﻿<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ page_title|default('公开网站线索解析调试台') }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='app.css') }}" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand__mark">线索台</div>
+        <div class="brand__text">
+          <strong>公开网站线索解析调试台</strong>
+          <span>MVP 后台骨架</span>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <a class="nav__link {% if active_nav == 'dashboard' %}is-active{% endif %}" href="/dashboard">Dashboard</a>
+        <a class="nav__link {% if active_nav == 'jobs' %}is-active{% endif %}" href="/jobs">Jobs</a>
+        <a class="nav__link {% if active_nav == 'rules' %}is-active{% endif %}" href="/rules">Rule Memory</a>
+        <a class="nav__link {% if active_nav == 'samples' %}is-active{% endif %}" href="/samples">Samples</a>
+        <a class="nav__link {% if active_nav == 'training-queue' %}is-active{% endif %}" href="/training-queue">Training Queue</a>
+        <a class="nav__link {% if active_nav == 'audit' %}is-active{% endif %}" href="/audit">Audit</a>
+        <a class="nav__link {% if active_nav == 'config' %}is-active{% endif %}" href="/config">Config</a>
+      </nav>
+
+      <div class="sidebar__note">
+        <div class="sidebar__note-title">Contract Frozen</div>
+        <p>仅处理公开网页数据，保留 robots.txt 检查、限速、重试与审计入口。</p>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">{{ page_kicker|default('后台工作台') }}</p>
+          <h1>{{ page_title|default('公开网站线索解析调试台') }}</h1>
+          {% if page_subtitle %}<p class="topbar__subtitle">{{ page_subtitle }}</p>{% endif %}
+        </div>
+        <div class="topbar__meta">
+          <div class="meta-card">
+            <span class="meta-card__label">运行模式</span>
+            <strong>{{ runtime_mode|default('development') }}</strong>
+          </div>
+          <div class="meta-card">
+            <span class="meta-card__label">状态约束</span>
+            <strong>pending / running / parsed / review / failed / approved / exported</strong>
+          </div>
+        </div>
+      </header>
+
+      <section class="content">
+        {% block content %}{% endblock %}
+      </section>
+    </main>
+  </div>
+</body>
+</html>

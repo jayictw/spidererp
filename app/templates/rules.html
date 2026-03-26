@@ -1,0 +1,84 @@
+﻿{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+
+{% block content %}
+<section class="panel">
+  {{ ui.section_header('Rule Memory', '规则列表、解释说明与版本入口。', '查看规则详情', '/rules/1') }}
+  {{ ui.api_error(api_error|default(None)) }}
+  {% set rules_payload = rules_payload|default(data|default({})) %}
+  {% set rules_items = rules|default(rules_payload.get('items', [])) %}
+  {% set rules_meta = pagination|default(rules_payload.get('meta', {})) %}
+
+  {% set current_sort = sort_by|default(request.query_params.get('sort_by', 'updated_at')) %}
+  {% set current_order = sort_order|default(request.query_params.get('sort_order', 'desc')) %}
+  {% set has_filters = request.query_params.get('keyword') or request.query_params.get('enabled') or request.query_params.get('auto_approve_on_hit') %}
+
+  <form class="filter-bar" method="get">
+    <input type="search" name="keyword" placeholder="搜索规则名 / 命中提示 / 解释" value="{{ filters.keyword|default(request.query_params.get('keyword', '')) }}" />
+    <select name="enabled">
+      <option value="">全部启用状态</option>
+      <option value="true" {% if filters.enabled|default(request.query_params.get('enabled', '')) == 'true' %}selected{% endif %}>启用</option>
+      <option value="false" {% if filters.enabled|default(request.query_params.get('enabled', '')) == 'false' %}selected{% endif %}>停用</option>
+    </select>
+    <select name="auto_approve_on_hit">
+      <option value="">自动放行</option>
+      <option value="true" {% if filters.auto_approve_on_hit|default(request.query_params.get('auto_approve_on_hit', '')) == 'true' %}selected{% endif %}>是</option>
+      <option value="false" {% if filters.auto_approve_on_hit|default(request.query_params.get('auto_approve_on_hit', '')) == 'false' %}selected{% endif %}>否</option>
+    </select>
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">筛选</button>
+      <a class="btn" href="{{ request.url.replace(query='') }}">清空</a>
+    </div>
+  </form>
+
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          {{ ui.sortable_th(request, '规则名', 'rule_name', current_sort, current_order) }}
+          {{ ui.sortable_th(request, '创建时间', 'created_at', current_sort, current_order) }}
+          {{ ui.sortable_th(request, '更新时间', 'updated_at', current_sort, current_order) }}
+          {{ ui.sortable_th(request, '规则ID', 'id', current_sort, current_order) }}
+          {{ ui.sortable_th(request, '状态', 'enabled', current_sort, current_order) }}
+          {{ ui.sortable_th(request, '自动放行', 'auto_approve_on_hit', current_sort, current_order) }}
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in rules_items %}
+        <tr>
+          <td>
+            <a class="table-link" href="/rules/{{ item.id|default(1) }}">{{ item.rule_name }}</a>
+            <div class="table-sub">v{{ item.version_note|default('1') }}</div>
+          </td>
+          <td class="table-sub">{{ item.created_at|default('') }}</td>
+          <td class="table-sub">{{ item.updated_at|default('') }}</td>
+          <td>{{ item.id|default('') }}</td>
+          <td>{{ ui.badge('enabled' if item.enabled else 'disabled', item.enabled and 'good' or 'neutral') }}</td>
+          <td>{{ '是' if item.auto_approve_on_hit else '否' }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="6">{% if has_filters %}{{ ui.empty_state('查无结果', '当前筛选条件下没有匹配的 Rule。', '清空筛选后再试。') }}{% else %}{{ ui.empty_state('暂无规则', '这里会显示规则解释、版本信息和自动放行策略。', '先 seed 一条规则，确认字段映射。') }}{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {{ ui.pagination_footer(request, rules_meta, '条规则') }}
+</section>
+
+<section class="panel">
+  {{ ui.section_header('Seed 预览', '便于核对 rule_name / sample_input / expected_output 结构。') }}
+  <div class="preview-grid">
+    {% for item in rule_seed_preview|default([]) %}
+    <article class="preview-card">
+      <strong>{{ item.rule_name|default('规则示例') }}</strong>
+      <p>{{ item.hit_hint|default('') }}</p>
+      <code>{{ item.sample_input|default('sample input') }}</code>
+    </article>
+    {% else %}
+    <div class="placeholder-box">暂无规则 seed 预览。</div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

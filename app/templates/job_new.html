@@ -1,0 +1,94 @@
+﻿{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+
+{% block content %}
+<section class="panel">
+  {{ ui.section_header('新建任务', '表单只负责字段收集，不在前端做复杂校验。') }}
+
+  <form class="form-grid" method="post" action="/jobs/new">
+    <label>
+      <span>task_name</span>
+      <input name="task_name" placeholder="例如：公开网站线索采集 - 华东" />
+    </label>
+    <label>
+      <span>crawl_scope</span>
+      <input name="crawl_scope" placeholder="例如：官网首页 / 产品页 / 联系方式页" />
+    </label>
+    <label>
+      <span>source_type</span>
+      <input name="source_type" placeholder="例如：公开网页" />
+    </label>
+    <label>
+      <span>keywords</span>
+      <input name="keywords" placeholder="多个关键词用逗号分隔" />
+    </label>
+    <label>
+      <span>start_page</span>
+      <input name="start_page" type="number" min="1" value="1" />
+    </label>
+    <label>
+      <span>max_pages</span>
+      <input name="max_pages" type="number" min="1" value="10" />
+    </label>
+    <label>
+      <span>time_range</span>
+      <input name="time_range" placeholder="例如：最近 30 天" />
+    </label>
+    <label>
+      <span>include_domains</span>
+      <input name="include_domains" placeholder="例如：example.com, foo.com" />
+    </label>
+    <label class="span-2">
+      <span>exclude_rules</span>
+      <textarea name="exclude_rules" rows="3" placeholder="不采集哪些路径、关键词或页面类型"></textarea>
+    </label>
+    <label class="span-2">
+      <span>rule_notes</span>
+      <textarea name="rule_notes" rows="3" placeholder="规则说明、人工补充说明、审核提示"></textarea>
+    </label>
+    <label>
+      <span>schedule_mode</span>
+      <select name="schedule_mode">
+        <option value="manual">manual</option>
+        <option value="scheduled">scheduled</option>
+      </select>
+    </label>
+    <label>
+      <span>schedule_note</span>
+      <input name="schedule_note" placeholder="例如：工作日 09:00 执行" />
+    </label>
+    <label>
+      <span>n8n_webhook</span>
+      <input name="n8n_webhook" placeholder="预留 webhook 地址" />
+    </label>
+    <label>
+      <span>auto_push_n8n</span>
+      <select name="auto_push_n8n">
+        <option value="false">false</option>
+        <option value="true">true</option>
+      </select>
+    </label>
+    <label>
+      <span>enabled</span>
+      <select name="enabled">
+        <option value="true">true</option>
+        <option value="false">false</option>
+      </select>
+    </label>
+
+    <div class="form-actions span-2">
+      <button class="btn btn-primary" type="submit">保存任务</button>
+      <a class="btn" href="/jobs">返回列表</a>
+    </div>
+  </form>
+</section>
+
+<section class="panel">
+  {{ ui.section_header('字段提示', '保持与 frozen contract 同名字段，避免前后端错位。') }}
+  <div class="hint-grid">
+    {% for field in job_fields|default(['task_name', 'crawl_scope', 'source_type', 'keywords', 'start_page', 'max_pages', 'time_range', 'include_domains', 'exclude_rules', 'rule_notes', 'schedule_mode', 'schedule_note', 'n8n_webhook', 'auto_push_n8n', 'enabled']) %}
+    <div class="hint-card">{{ field }}</div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

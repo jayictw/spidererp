@@ -1,0 +1,80 @@
+﻿{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+
+{% block content %}
+<section class="panel">
+  <div class="detail-hero">
+    <div>
+      <p class="eyebrow">Rule Detail</p>
+      <h2>{{ rule.rule_name|default('规则详情') }}</h2>
+      <p>{{ rule.explanation_rule|default('这里展示规则说明、样本输入和预期输出。') }}</p>
+    </div>
+    <div class="detail-hero__actions">
+      {{ ui.badge(rule.enabled|default(false) and 'enabled' or 'disabled', rule.enabled|default(false) and 'good' or 'neutral') }}
+      {{ ui.badge(rule.auto_approve_on_hit|default(false) and 'auto approve' or 'manual review', rule.auto_approve_on_hit|default(false) and 'warn' or 'neutral') }}
+    </div>
+  </div>
+</section>
+
+<section class="split-grid">
+  <article class="panel">
+    {{ ui.section_header('核心字段', '后端直接注入 rule 对象即可。') }}
+    <dl class="definition-list">
+      <div><dt>rule_name</dt><dd>{{ rule.rule_name|default('') }}</dd></div>
+      <div><dt>hit_hint</dt><dd>{{ rule.hit_hint|default('') }}</dd></div>
+      <div><dt>sample_input</dt><dd><pre>{{ rule.sample_input|default('') }}</pre></dd></div>
+      <div><dt>expected_output</dt><dd><pre>{{ rule.expected_output|default('') }}</pre></dd></div>
+      <div><dt>version_note</dt><dd>{{ rule.version_note|default('') }}</dd></div>
+    </dl>
+  </article>
+
+  <article class="panel">
+    {{ ui.section_header('版本历史', '显示 RuleVersion 的最小时间线。') }}
+    <div class="timeline">
+      {% for version in rule_versions|default([]) %}
+      <article class="timeline__item">
+        <div class="timeline__head">
+          <strong>v{{ version.version_no|default('1') }}</strong>
+          <span>{{ version.created_at|default('') }}</span>
+        </div>
+        <p>{{ version.change_summary|default(version.version_note|default('')) }}</p>
+      </article>
+      {% else %}
+      <div class="placeholder-box">暂无版本记录。</div>
+      {% endfor %}
+    </div>
+  </article>
+</section>
+
+<section class="panel">
+  {{ ui.section_header('关联样本', '规则详情页只做展示，不在前端写审核逻辑。') }}
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>来源</th>
+          <th>标题</th>
+          <th>状态</th>
+          <th>source_url</th>
+          <th>crawl_time</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in related_samples|default([]) %}
+        <tr>
+          <td>{{ item.source_name|default('') }}</td>
+          <td>{{ item.title|default('') }}</td>
+          <td>{{ ui.badge(item.status|default('review'), 'status-' ~ item.status|default('review')) }}</td>
+          <td class="truncate">{{ item.source_url|default('') }}</td>
+          <td>{{ item.crawl_time|default('') }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5">{{ ui.empty_state('暂无关联样本', '这里会承接 RuleVersion 与 Sample 的预览数据。') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

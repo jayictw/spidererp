@@ -1,0 +1,130 @@
+﻿{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+
+{% block content %}
+<section class="panel">
+  {{ ui.section_header('Samples', '样本列表、解析结果与审核状态。') }}
+  {{ ui.api_error(api_error|default(None)) }}
+  {% set samples_payload = samples_payload|default(data|default({})) %}
+  {% set samples_items = samples|default(samples_payload.get('items', [])) %}
+  {% set samples_meta = pagination|default(samples_payload.get('meta', {})) %}
+
+  {% set current_sort = sort_by|default(request.query_params.get('sort_by', 'crawl_time')) %}
+  {% set current_order = sort_order|default(request.query_params.get('sort_order', 'desc')) %}
+  {% set has_filters = request.query_params.get('keyword') or request.query_params.get('status') or request.query_params.get('is_duplicate') or request.query_params.get('rule_version_id') %}
+
+  <form class="filter-bar" method="get">
+    <input type="search" name="keyword" placeholder="搜索公司 / 联系人 / 邮箱 / 电话" value="{{ filters.keyword|default(request.query_params.get('keyword', '')) }}" />
+    <select name="status">
+      <option value="">全部状态</option>
+      {% for value in ['pending', 'running', 'parsed', 'review', 'failed', 'approved', 'exported'] %}
+      <option value="{{ value }}" {% if filters.status|default(request.query_params.get('status', '')) == value %}selected{% endif %}>{{ value }}</option>
+      {% endfor %}
+    </select>
+    <select name="is_duplicate">
+      <option value="">重复标记</option>
+      <option value="true" {% if request.query_params.get('is_duplicate', '') == 'true' %}selected{% endif %}>duplicate</option>
+      <option value="false" {% if request.query_params.get('is_duplicate', '') == 'false' %}selected{% endif %}>unique</option>
+    </select>
+    <input type="text" name="rule_version_id" placeholder="rule_version_id" value="{{ request.query_params.get('rule_version_id', '') }}" />
+    <input type="text" name="source_name" placeholder="source_name" value="{{ request.query_params.get('source_name', '') }}" />
+    <input type="text" name="domain" placeholder="domain" value="{{ request.query_params.get('domain', '') }}" />
+    <input type="text" name="dedupe_key" placeholder="dedupe_key" value="{{ request.query_params.get('dedupe_key', '') }}" />
+    <select name="sort_by">
+      <option value="crawl_time" {% if current_sort == 'crawl_time' %}selected{% endif %}>按 crawl_time 排序</option>
+      <option value="created_at" {% if current_sort == 'created_at' %}selected{% endif %}>按 created_at 排序</option>
+      <option value="confidence" {% if current_sort == 'confidence' %}selected{% endif %}>按 confidence 排序</option>
+      <option value="status" {% if current_sort == 'status' %}selected{% endif %}>按 status 排序</option>
+      <option value="is_duplicate" {% if current_sort == 'is_duplicate' %}selected{% endif %}>按 is_duplicate 排序</option>
+    </select>
+    <select name="sort_order">
+      <option value="desc" {% if current_order == 'desc' %}selected{% endif %}>desc</option>
+      <option value="asc" {% if current_order == 'asc' %}selected{% endif %}>asc</option>
+    </select>
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">筛选</button>
+      <a class="btn" href="{{ request.url.replace(query='') }}">清空</a>
+    </div>
+  </form>
+
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          {{ ui.sortable_th(request, '标题', 'title', current_sort, current_order) }}
+          {{ ui.sortable_th(request, '来源', 'source_name', current_sort, current_order) }}
+          {{ ui.sortable_th(request, '状态', 'status', current_sort, current_order) }}
+          {{ ui.sortable_th(request, '重复', 'is_duplicate', current_sort, current_order) }}
+          {{ ui.sortable_th(request, 'dedupe_key', 'dedupe_key', current_sort, current_order) }}
+          {{ ui.sortable_th(request, 'crawl_time', 'crawl_time', current_sort, current_order) }}
+          {{ ui.sortable_th(request, 'created_at', 'created_at', current_sort, current_order) }}
+          {{ ui.sortable_th(request, 'confidence', 'confidence', current_sort, current_order) }}
+          <th>trace</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in samples_items %}
+        <tr>
+          <td>
+            <strong>{{ item.title|default(item.company_name|default('')) }}</strong>
+            <div class="table-sub">{{ item.person_name|default('') }} {{ item.title|default('') }}</div>
+          </td>
+          <td>{{ item.source_name|default('') }}</td>
+          <td>{{ ui.badge(item.status|default('pending'), 'status-' ~ item.status|default('pending')) }}</td>
+          <td>{{ ui.duplicate_badge(item) }}</td>
+          <td class="table-sub">{{ item.dedupe_key|default('') }}</td>
+          <td class="table-sub">{{ item.crawl_time|default('') }}</td>
+          <td class="table-sub">{{ item.created_at|default('') }}</td>
+          <td>{{ item.confidence|default('') }}</td>
+          <td>
+            <a class="table-link" href="{{ request.url.include_query_params(trace_sample_id=item.id) }}#trace" title="查看 Trace">查看 trace</a>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="9">{% if has_filters %}{{ ui.empty_state('查无结果', '当前筛选条件下没有匹配的 Sample。', '清空筛选后再试。') }}{% else %}{{ ui.empty_state('暂无样本', '这里会显示 normalized_payload、raw_payload、重复标记和 Trace 入口。', '先 seed 一条公开网页样本。') }}{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {{ ui.pagination_footer(request, samples_meta, '条样本') }}
+</section>
+
+<section class="split-grid">
+  <article class="panel">
+    {{ ui.section_header('Normalized Schema 预览', '必须包含 source_url / crawl_time / confidence。') }}
+    <pre class="code-block">{{ normalized_schema_preview|default({
+  'company_name': '',
+  'website': '',
+  'person_name': '',
+  'title': '',
+  'email': '',
+  'phone': '',
+  'whatsapp': '',
+  'country': '',
+  'source_url': '',
+  'crawl_time': '',
+  'confidence': 0.0,
+  'raw_text': '',
+  'raw_html_excerpt': ''
+}) | tojson(indent=2) }}</pre>
+  </article>
+  <article class="panel">
+    {{ ui.section_header('Seed 预览', '用于快速核对 sample 字段是否完整。') }}
+    <div class="seed-preview">
+      {% for item in sample_seed_preview|default([]) %}
+      <div class="seed-preview__item">
+        <strong>{{ item.company_name|default(item.source_name|default('Company')) }}</strong>
+        <p>{{ item.website|default('') }}</p>
+        <p>{{ item.source_url|default('') }}</p>
+      </div>
+      {% else %}
+      <div class="placeholder-box">暂无样本 seed 预览。</div>
+      {% endfor %}
+    </div>
+  </article>
+</section>
+
+{{ ui.trace_section(trace_data=trace_data|default(None), trace_error=trace_error|default(None)) }}
+{% endblock %}

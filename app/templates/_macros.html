@@ -1,0 +1,158 @@
+﻿{% macro badge(text, kind='neutral') -%}
+<span class="badge badge-{{ kind }}">{{ text }}</span>
+{%- endmacro %}
+
+{% macro empty_state(title, description, hint='') -%}
+<div class="empty-state">
+  <div class="empty-state__icon">!</div>
+  <div class="empty-state__body">
+    <h3>{{ title }}</h3>
+    <p>{{ description }}</p>
+    {% if hint %}
+    <div class="empty-state__hint">{{ hint }}</div>
+    {% endif %}
+  </div>
+</div>
+{%- endmacro %}
+
+{% macro section_header(title, description='', action_label='', action_href='') -%}
+<div class="section-header">
+  <div>
+    <h2>{{ title }}</h2>
+    {% if description %}<p>{{ description }}</p>{% endif %}
+  </div>
+  {% if action_label %}
+  <a class="btn btn-primary" href="{{ action_href }}">{{ action_label }}</a>
+  {% endif %}
+</div>
+{%- endmacro %}
+
+{% macro api_error(error=None) -%}
+{% if error %}
+{% set code = error.code|default(error.error|default('api_error')) %}
+{% set message = error.message|default(error.detail|default(error)) %}
+<div class="error-banner" role="alert">
+  <div>
+    <strong>API Error</strong>
+    <p>{{ message }}</p>
+  </div>
+  <code>{{ code }}</code>
+</div>
+{% endif %}
+{%- endmacro %}
+
+{% macro sortable_th(request, label, sort_key, sort_by='', sort_order='asc', align='left') -%}
+{% set is_active = sort_by == sort_key %}
+{% set next_order = 'desc' if is_active and sort_order == 'asc' else 'asc' %}
+<th class="sortable-th sortable-th--{{ align }}">
+  <a class="sortable-link {% if is_active %}is-active{% endif %}" href="{{ request.url.include_query_params(sort_by=sort_key, sort_order=next_order) }}">
+    <span>{{ label }}</span>
+    <span class="sort-indicator">{% if is_active %}{{ '↓' if sort_order == 'desc' else '↑' }}{% else %}↕{% endif %}</span>
+  </a>
+</th>
+{%- endmacro %}
+
+{% macro pagination_footer(request, pagination=None, item_label='条') -%}
+{% set page = pagination.page|default(1) if pagination else 1 %}
+{% set page_size = pagination.page_size|default(20) if pagination else 20 %}
+{% set total = pagination.total|default(0) if pagination else 0 %}
+{% set total_pages = pagination.total_pages|default(((total + page_size - 1) // page_size) if page_size > 0 and total > 0 else 1) if pagination else 1 %}
+{% set prev_page = 1 if page <= 1 else page - 1 %}
+{% set next_page = total_pages if page >= total_pages else page + 1 %}
+<footer class="pagination-footer">
+  <div class="pagination-footer__meta">
+    <span>第 {{ page }} / {{ total_pages }} 页</span>
+    <span>共 {{ total }} {{ item_label }}</span>
+    <span>每页 {{ page_size }} 条</span>
+  </div>
+  <div class="pagination-footer__actions">
+    <a class="btn {% if page <= 1 %}is-disabled{% endif %}" href="{% if pagination and pagination.prev_url %}{{ pagination.prev_url }}{% else %}{{ request.url.include_query_params(page=prev_page) }}{% endif %}">上一页</a>
+    <a class="btn {% if page >= total_pages %}is-disabled{% endif %}" href="{% if pagination and pagination.next_url %}{{ pagination.next_url }}{% else %}{{ request.url.include_query_params(page=next_page) }}{% endif %}">下一页</a>
+  </div>
+</footer>
+{%- endmacro %}
+
+{% macro duplicate_badge(item) -%}
+{% set duplicate = item.is_duplicate|default(item.duplicate|default(false)) %}
+{% if duplicate or item.duplicate_status|default('') in ['duplicate', 'duplicated', 'merged'] %}
+  {{ badge('duplicate', 'warn') }}
+{% else %}
+  {{ badge('unique', 'good') }}
+{% endif %}
+{%- endmacro %}
+
+{% macro trace_section(trace_sample=None, trace_events=None, trace_data=None, trace_error=None) -%}
+<section class="panel trace-panel" id="trace">
+  {{ section_header('Trace', '展示去重键、解析版本、规则版本与追踪路径。') }}
+  {{ api_error(trace_error) }}
+  {% if trace_data %}
+  <div class="trace-grid">
+    <dl class="definition-list trace-definition">
+      <div><dt>sample_id</dt><dd>{{ trace_data.sample.id|default('') }}</dd></div>
+      <div><dt>is_duplicate</dt><dd>{{ trace_data.dedupe.is_duplicate|default(false) }}</dd></div>
+      <div><dt>dedupe_key</dt><dd>{{ trace_data.dedupe.dedupe_key|default('') }}</dd></div>
+      <div><dt>duplicate_reason</dt><dd>{{ trace_data.dedupe.duplicate_reason|default('') }}</dd></div>
+      <div><dt>duplicate_of_sample_id</dt><dd>{{ trace_data.dedupe.duplicate_of_sample_id|default('') }}</dd></div>
+      <div><dt>extractor_name</dt><dd>{{ trace_data.extractor.extractor_name|default('') }}</dd></div>
+      <div><dt>extractor_version</dt><dd>{{ trace_data.extractor.extractor_version|default('') }}</dd></div>
+      <div><dt>rule_id</dt><dd>{{ trace_data.rule.rule_id|default('') }}</dd></div>
+      <div><dt>rule_version_id</dt><dd>{{ trace_data.rule.rule_version_id|default('') }}</dd></div>
+      <div><dt>primary_sample</dt><dd>{% if trace_data.primary_sample %}#{{ trace_data.primary_sample.id }} {{ trace_data.primary_sample.title|default('') }}{% else %}无{% endif %}</dd></div>
+    </dl>
+    <div class="trace-events">
+      <h3>audit_timeline</h3>
+      {% for event in trace_data.audit_timeline|default([]) %}
+      <article class="trace-event">
+        <div class="trace-event__head">
+          <strong>{{ event.action|default('') }}</strong>
+          <span>{{ event.event_time|default('') }}</span>
+        </div>
+        <p>{{ event.summary|default('') }}</p>
+        <div class="trace-event__meta">
+          <span>{{ event.status|default('') }}</span>
+          <span>{{ event.operator|default('') }}</span>
+          <span>{{ event.trace_version|default('') }}</span>
+        </div>
+      </article>
+      {% else %}
+      <div class="placeholder-box">暂无审计轨迹。</div>
+      {% endfor %}
+    </div>
+  </div>
+  {% elif trace_sample %}
+  <div class="trace-grid">
+    <dl class="definition-list trace-definition">
+      <div><dt>sample_id</dt><dd>{{ trace_sample.id|default(trace_sample.sample_id|default('')) }}</dd></div>
+      <div><dt>dedupe_key</dt><dd>{{ trace_sample.dedupe_key|default('') }}</dd></div>
+      <div><dt>extractor_version</dt><dd>{{ trace_sample.extractor_version|default('') }}</dd></div>
+      <div><dt>rule_version_id</dt><dd>{{ trace_sample.rule_version_id|default('') }}</dd></div>
+      <div><dt>duplicate_reason</dt><dd>{{ trace_sample.duplicate_reason|default('') }}</dd></div>
+      <div><dt>trace_status</dt><dd>{{ trace_sample.trace_status|default(trace_sample.status|default('')) }}</dd></div>
+      <div><dt>trace_path</dt><dd><pre>{{ trace_sample.trace_path|default('') }}</pre></dd></div>
+      <div><dt>raw_excerpt</dt><dd><pre>{{ trace_sample.raw_html_excerpt|default(trace_sample.raw_text|default('')) }}</pre></dd></div>
+      <div><dt>normalized_excerpt</dt><dd><pre>{{ trace_sample.normalized_payload|default({}) | tojson(indent=2) }}</pre></dd></div>
+    </dl>
+    <div class="trace-events">
+      <h3>trace_events</h3>
+      {% for event in trace_events|default([]) %}
+      <article class="trace-event">
+        <div class="trace-event__head">
+          <strong>{{ event.label|default(event.step|default('event')) }}</strong>
+          <span>{{ event.event_time|default(event.time|default('')) }}</span>
+        </div>
+        <p>{{ event.message|default(event.summary|default('')) }}</p>
+        <div class="trace-event__meta">
+          <span>{{ event.rule_version_id|default('') }}</span>
+          <span>{{ event.extractor_version|default('') }}</span>
+        </div>
+      </article>
+      {% else %}
+      <div class="placeholder-box">暂无 trace 事件。选中一条样本后，这里会显示追踪链路。</div>
+      {% endfor %}
+    </div>
+  </div>
+  {% else %}
+  {{ empty_state('暂无 trace 数据', '点击样本行内“查看 trace”后，这里会显示追溯信息。', '') }}
+  {% endif %}
+</section>
+{%- endmacro %}

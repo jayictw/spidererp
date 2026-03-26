@@ -1,0 +1,67 @@
+﻿{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+
+{% block content %}
+<section class="panel">
+  {{ ui.section_header('Config Readiness', '系统配置、Webhook 与 ERP 预留位。') }}
+
+  <div class="filter-bar filter-bar--compact">
+    <div class="chip">配置只读预览</div>
+    <div class="chip">支持 seed data</div>
+    <div class="chip">预留脱敏 / 加密扩展</div>
+  </div>
+
+  <form class="form-grid" method="post" action="/config">
+    <label class="span-2">
+      <span>erp_base_url</span>
+      <input name="erp_base_url" value="{{ config.erp_base_url|default('') }}" placeholder="https://erp.example.com" />
+    </label>
+    <label class="span-2">
+      <span>n8n_webhook</span>
+      <input name="n8n_webhook" value="{{ config.n8n_webhook|default('') }}" placeholder="Webhook 地址" />
+    </label>
+    <label>
+      <span>n8n_token</span>
+      <input name="n8n_token" value="{{ config.n8n_token|default('') }}" placeholder="Token" />
+    </label>
+    <label>
+      <span>erp_intake_token</span>
+      <input name="erp_intake_token" value="{{ config.erp_intake_token|default('') }}" placeholder="Token" />
+    </label>
+    <div class="form-actions span-2">
+      <button class="btn btn-primary" type="submit">保存配置</button>
+      <button class="btn" type="button">测试连通性</button>
+    </div>
+  </form>
+</section>
+
+<section class="split-grid">
+  <article class="panel">
+    {{ ui.section_header('配置状态', '后端可在这里汇总 readiness。') }}
+    <div class="status-list">
+      {% for item in config_status|default([
+        'ERP base URL 已预留',
+        'n8n webhook 待检查',
+        'Token 字段可后续加密',
+        'robots 检查入口已预留'
+      ]) %}
+      <div class="status-list__item">{{ item }}</div>
+      {% endfor %}
+    </div>
+  </article>
+  <article class="panel">
+    {{ ui.section_header('Seed 预览', '用于核对 config 结构。') }}
+    <div class="seed-list">
+      {% set config_map = config|default({}) %}
+      {% for key, value in config_map.items() %}
+      <div class="seed-row">
+        <strong>{{ key }}</strong>
+        <span>{{ value }}</span>
+      </div>
+      {% else %}
+      <div class="placeholder-box">暂无 config 数据。</div>
+      {% endfor %}
+    </div>
+  </article>
+</section>
+{% endblock %}

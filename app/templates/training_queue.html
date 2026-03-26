@@ -1,0 +1,65 @@
+﻿{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+
+{% block content %}
+<section class="panel">
+  {{ ui.section_header('Training Queue', '样本沉淀、优先级与规则联动入口。') }}
+
+  <div class="filter-bar">
+    <input type="search" name="keyword" placeholder="搜索 sample_id / linked_rule_id / note" value="{{ filters.keyword|default('') }}" />
+    <select name="queue_status">
+      <option value="">队列状态</option>
+      <option value="pending" {% if filters.queue_status|default('') == 'pending' %}selected{% endif %}>pending</option>
+      <option value="running" {% if filters.queue_status|default('') == 'running' %}selected{% endif %}>running</option>
+      <option value="review" {% if filters.queue_status|default('') == 'review' %}selected{% endif %}>review</option>
+      <option value="approved" {% if filters.queue_status|default('') == 'approved' %}selected{% endif %}>approved</option>
+    </select>
+    <select name="priority">
+      <option value="">优先级</option>
+      <option value="high">high</option>
+      <option value="medium">medium</option>
+      <option value="low">low</option>
+    </select>
+    <button class="btn">筛选</button>
+  </div>
+
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>sample_id</th>
+          <th>priority</th>
+          <th>queue_status</th>
+          <th>linked_rule_id</th>
+          <th>note</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in training_queue|default([]) %}
+        <tr>
+          <td>{{ item.sample_id|default('') }}</td>
+          <td>{{ item.priority|default('') }}</td>
+          <td>{{ ui.badge(item.queue_status|default('pending'), 'status-' ~ item.queue_status|default('pending')) }}</td>
+          <td>{{ item.linked_rule_name|default(item.linked_rule_id|default('')) }}</td>
+          <td class="table-sub">{{ item.note|default('') }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5">{{ ui.empty_state('暂无训练队列', '这里会聚合高频错误样本，供规则迭代使用。', '先通过审计流程或 seed 数据填充。') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="panel">
+  {{ ui.section_header('队列说明', '保留 n8n / ERP 扩展位，不在前端塞复杂逻辑。') }}
+  <div class="callout-grid">
+    <div class="callout">sample_id -> 关联原始样本</div>
+    <div class="callout">priority -> 排序优先级</div>
+    <div class="callout">queue_status -> pending / running / review / approved</div>
+    <div class="callout">linked_rule_id -> 预留规则联动</div>
+  </div>
+</section>
+{% endblock %}
